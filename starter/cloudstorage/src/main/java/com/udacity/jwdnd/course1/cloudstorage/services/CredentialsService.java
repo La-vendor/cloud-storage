@@ -24,4 +24,11 @@ public class CredentialsService {
     }
 
 
+    public void deleteCredentials(Integer credentialId) {
+        credentialsMapper.delete(credentialId);
+    }
+
+    public void updateCredentials(Credentials credentials) {
+        credentialsMapper.update(credentials);
+    }
 }
