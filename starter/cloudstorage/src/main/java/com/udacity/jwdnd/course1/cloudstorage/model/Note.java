@@ -1,5 +1,8 @@
 package com.udacity.jwdnd.course1.cloudstorage.model;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class Note {
 
     private Integer noteId;
