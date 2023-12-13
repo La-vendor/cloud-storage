@@ -20,7 +20,7 @@ public class CredentialsService {
     }
 
     public List<Credentials> getCredentials(Integer userId){
-        return credentialsMapper.getCredentials(userId);
+        return credentialsMapper.getUserCredentials(userId);
     }
 
 
