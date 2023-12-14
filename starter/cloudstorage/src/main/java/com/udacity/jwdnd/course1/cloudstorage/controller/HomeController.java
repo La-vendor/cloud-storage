@@ -1,18 +1,19 @@
 package com.udacity.jwdnd.course1.cloudstorage.controller;
 
 import com.udacity.jwdnd.course1.cloudstorage.model.Credentials;
+import com.udacity.jwdnd.course1.cloudstorage.model.File;
 import com.udacity.jwdnd.course1.cloudstorage.model.Note;
 import com.udacity.jwdnd.course1.cloudstorage.model.User;
-import com.udacity.jwdnd.course1.cloudstorage.services.CredentialsService;
-import com.udacity.jwdnd.course1.cloudstorage.services.NoteService;
-import com.udacity.jwdnd.course1.cloudstorage.services.UserService;
+import com.udacity.jwdnd.course1.cloudstorage.services.*;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 public class HomeController {
@@ -20,12 +21,16 @@ public class HomeController {
     private final NoteService noteService;
     private final UserService userService;
     private final CredentialsService credentialsService;
+    private final FileService fileService;
+    private final MessageService messageService;
 
 
-    public HomeController(NoteService noteService, UserService userService, CredentialsService credentialsService) {
+    public HomeController(NoteService noteService, UserService userService, CredentialsService credentialsService, FileService fileService, MessageService messageService) {
         this.noteService = noteService;
         this.userService = userService;
         this.credentialsService = credentialsService;
+        this.fileService = fileService;
+        this.messageService = messageService;
     }
 
 
@@ -38,14 +43,59 @@ public class HomeController {
     }
 
     @GetMapping("/home")
-    public String homeView(@ModelAttribute("userNote") Note note, @ModelAttribute("newCredentials") Credentials credentials, Authentication authentication, Model model) {
+    public String homeView(@ModelAttribute("userNote") Note note,
+                           @ModelAttribute("newCredentials") Credentials credentials,
+                           Authentication authentication,
+                           Model model) {
 
+        model.addAttribute("fileWarningMessage", messageService.getWarningMessage());
         Integer activeUserId = getActiveUserId(authentication);
         if (activeUserId != null) {
+
+            model.addAttribute("filesList", this.fileService.getFiles(activeUserId));
             model.addAttribute("noteList", this.noteService.getNotes(activeUserId));
             model.addAttribute("credentialsList", this.credentialsService.getCredentials(activeUserId));
         }
         return "home";
+    }
+
+    @PostMapping("/file/upload")
+    public String fileUpload(@RequestParam("file") MultipartFile multipartFile, Authentication authentication, Model model) {
+
+        if(fileService.getFileByName(multipartFile.getOriginalFilename()) != null) {
+            messageService.setWarningMessage("This file name already exists. Please rename or choose another file.");
+        }
+        else{
+            messageService.clearWarningMessage();
+            fileService.addFile(multipartFile, getActiveUserId(authentication));
+        }
+        return "redirect:/home";
+    }
+
+    @GetMapping("/file/download/{fileId}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable("fileId") String stringFileId) {
+
+        Integer fileId = Integer.valueOf(stringFileId);
+        File file = fileService.getFileById(fileId);
+
+        if (file != null) {
+            ByteArrayResource resource = new ByteArrayResource(file.getFileData());
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFileName() + "\"")
+                    .contentLength(file.getFileData().length)
+                    .body(resource);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+
+    }
+
+    @GetMapping("/file/delete/{fileId}")
+    public String fileDelete(@PathVariable("fileId") String stringFileId) {
+        Integer fileId = Integer.valueOf(stringFileId);
+        this.fileService.deleteFile(fileId);
+        return "redirect:/home";
     }
 
 
@@ -80,8 +130,7 @@ public class HomeController {
                 credentials.setUserId(activeUserId);
                 this.credentialsService.addCredentials(credentials);
             }
-        }
-        else{
+        } else {
             this.credentialsService.updateCredentials(credentials);
         }
         return "redirect:/home";

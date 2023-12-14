@@ -1,5 +1,9 @@
 package com.udacity.jwdnd.course1.cloudstorage.model;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
 public class File {
 
     private Integer fileId;
@@ -7,8 +11,20 @@ public class File {
     private String contentType;
     private String fileSize;
     private Integer userId;
+    private byte[] fileData;
 
     public File() {
+    }
+
+    public File(MultipartFile multipartFile, Integer userId){
+        this.fileName = multipartFile.getOriginalFilename();
+        this.contentType = multipartFile.getContentType();
+        this.fileSize = String.valueOf(multipartFile.getSize());
+        this.userId = userId;
+        try {
+            this.fileData = multipartFile.getBytes();
+        }catch(IOException ignore){
+        }
     }
 
     public Integer getFileId() {
@@ -49,5 +65,13 @@ public class File {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(byte[] fileData) {
+        this.fileData = fileData;
     }
 }
