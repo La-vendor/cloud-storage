@@ -23,14 +23,16 @@ public class HomeController {
     private final CredentialsService credentialsService;
     private final FileService fileService;
     private final MessageService messageService;
+    private final EncryptionService encryptionService;
 
 
-    public HomeController(NoteService noteService, UserService userService, CredentialsService credentialsService, FileService fileService, MessageService messageService) {
+    public HomeController(NoteService noteService, UserService userService, CredentialsService credentialsService, FileService fileService, MessageService messageService, EncryptionService encryptionService) {
         this.noteService = noteService;
         this.userService = userService;
         this.credentialsService = credentialsService;
         this.fileService = fileService;
         this.messageService = messageService;
+        this.encryptionService = encryptionService;
     }
 
 
@@ -51,7 +53,7 @@ public class HomeController {
         model.addAttribute("fileWarningMessage", messageService.getWarningMessage());
         Integer activeUserId = getActiveUserId(authentication);
         if (activeUserId != null) {
-
+            model.addAttribute("encryptionService", encryptionService);
             model.addAttribute("filesList", this.fileService.getFiles(activeUserId));
             model.addAttribute("noteList", this.noteService.getNotes(activeUserId));
             model.addAttribute("credentialsList", this.credentialsService.getCredentials(activeUserId));
@@ -131,6 +133,7 @@ public class HomeController {
                 this.credentialsService.addCredentials(credentials);
             }
         } else {
+
             this.credentialsService.updateCredentials(credentials);
         }
         return "redirect:/home";
