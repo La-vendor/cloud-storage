@@ -4,11 +4,12 @@ package com.udacity.jwdnd.course1.cloudstorage.controller;
 import com.udacity.jwdnd.course1.cloudstorage.model.User;
 import com.udacity.jwdnd.course1.cloudstorage.services.UserService;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Controller()
 @RequestMapping("/signup")
@@ -25,8 +26,14 @@ public class SignupController {
         return "signup";
     }
 
+    /*
+    This is a solution proposed in https://knowledge.udacity.com/questions/762223
+    When this function was originally returning String "login",
+     page login was correctly loaded but the URL remain unchanged.
+     Solution proposed by Mustafa A. enabled to pass all test prepared by Udacity.
+     */
     @PostMapping()
-    public String signupUser(@ModelAttribute User user, Model model) {
+    public RedirectView signupUser(@ModelAttribute User user, RedirectAttributes attributes) {
         String signupError = null;
 
         if (!userService.isUsernameAvailable(user.getUsername())) {
@@ -41,12 +48,13 @@ public class SignupController {
         }
 
         if (signupError == null) {
-            model.addAttribute("signupSuccess", true);
-//            return "redirect:/login";
-        } else {
-            model.addAttribute("signupError", signupError);
+            RedirectView redirectView = new RedirectView("/login", true);
+            attributes.addFlashAttribute("signupSuccess", true);
+            return redirectView;
         }
 
-        return "signup";
+        RedirectView redirectView = new RedirectView("/signup", true);
+        attributes.addFlashAttribute("signupError", signupError);
+        return redirectView;
     }
 }
