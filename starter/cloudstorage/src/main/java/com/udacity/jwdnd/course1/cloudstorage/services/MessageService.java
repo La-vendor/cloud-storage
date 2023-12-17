@@ -6,8 +6,13 @@ import org.springframework.stereotype.Service;
 public class MessageService {
 
     private String warningMessage;
+    private String  resultMessage;
 
     public MessageService() {
+    }
+
+    public void setResultMessage(String resultMessage) {
+        this.resultMessage = resultMessage;
     }
 
     public void setWarningMessage(String warningMessage){
@@ -18,7 +23,15 @@ public class MessageService {
         this.warningMessage = null;
     }
 
+    public void clearResultMessage(){
+        this.resultMessage = null;
+    }
+
     public String getWarningMessage(){
         return this.warningMessage;
+    }
+
+    public Object getResultMessage() {
+        return this.resultMessage;
     }
 }

@@ -49,7 +49,7 @@ public class HomeController {
                            @ModelAttribute("newCredentials") Credentials credentials,
                            Authentication authentication,
                            Model model) {
-
+        model.addAttribute("resultMessage", messageService.getResultMessage());
         model.addAttribute("fileWarningMessage", messageService.getWarningMessage());
         Integer activeUserId = getActiveUserId(authentication);
         if (activeUserId != null) {
@@ -61,15 +61,21 @@ public class HomeController {
         return "home";
     }
 
+    @PostMapping("/clear-message")
+    public String clearMessage(){
+        messageService.clearResultMessage();
+        return "redirect:/home";
+    }
+
     @PostMapping("/file/upload")
     public String fileUpload(@RequestParam("file") MultipartFile multipartFile, Authentication authentication, Model model) {
 
-        if(fileService.getFileByName(multipartFile.getOriginalFilename()) != null) {
+        if (fileService.getFileByName(getActiveUserId(authentication), multipartFile.getOriginalFilename()) != null) {
             messageService.setWarningMessage("This file name already exists. Please rename or choose another file.");
-        }
-        else{
+        } else {
             messageService.clearWarningMessage();
             fileService.addFile(multipartFile, getActiveUserId(authentication));
+            messageService.setResultMessage("File was successfully added.");
         }
         return "redirect:/home";
     }
@@ -97,6 +103,7 @@ public class HomeController {
     public String fileDelete(@PathVariable("fileId") String stringFileId) {
         Integer fileId = Integer.valueOf(stringFileId);
         this.fileService.deleteFile(fileId);
+        messageService.setResultMessage("File was successfully deleted.");
         return "redirect:/home";
     }
 
@@ -109,9 +116,11 @@ public class HomeController {
             if (activeUserId != null) {
                 note.setUserId(activeUserId);
                 this.noteService.addNote(note);
+                messageService.setResultMessage("Note was successfully added.");
             }
         } else {
             this.noteService.updateNote(note);
+            messageService.setResultMessage("Note was successfully updated.");
         }
         return "redirect:/home";
     }
@@ -120,6 +129,7 @@ public class HomeController {
     public String deleteNote(@PathVariable("noteId") String stringNoteId) {
         Integer noteId = Integer.valueOf(stringNoteId);
         this.noteService.deleteNote(noteId);
+        messageService.setResultMessage("Note was successfully deleted.");
         return "redirect:/home";
     }
 
@@ -131,10 +141,12 @@ public class HomeController {
             if (activeUserId != null) {
                 credentials.setUserId(activeUserId);
                 this.credentialsService.addCredentials(credentials);
+                messageService.setResultMessage("Credentials were successfully added.");
             }
         } else {
 
             this.credentialsService.updateCredentials(credentials);
+            messageService.setResultMessage("Credentials were successfully changed.");
         }
         return "redirect:/home";
     }
@@ -144,6 +156,7 @@ public class HomeController {
 
         Integer credentialId = Integer.valueOf(stringCredentialId);
         this.credentialsService.deleteCredentials(credentialId);
+        messageService.setResultMessage("Credentials were successfully deleted.");
         return "redirect:/home";
     }
 

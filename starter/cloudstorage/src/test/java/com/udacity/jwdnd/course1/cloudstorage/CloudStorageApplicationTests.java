@@ -1,5 +1,6 @@
 package com.udacity.jwdnd.course1.cloudstorage;
 
+import com.udacity.jwdnd.course1.cloudstorage.mapper.NoteMapper;
 import com.udacity.jwdnd.course1.cloudstorage.services.UserService;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.*;
@@ -23,11 +24,14 @@ class CloudStorageApplicationTests {
     private int port;
 
     private WebDriver driver;
-    private HomePage homePage;
     private NotePage notePage;
+    private CredentialsPage credentialsPage;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private NoteMapper noteMapper;
 
     @BeforeAll
     static void beforeAll() {
@@ -64,80 +68,150 @@ class CloudStorageApplicationTests {
         signUp("John", "Dell", "johndell", "delljohn");
         login("johndell", "delljohn");
 
-        homePage = new HomePage(driver);
+        HomePage homePage = new HomePage(driver);
         homePage.clickLogoutButton();
         driver.get("http://localhost:" + this.port + "/home");
         Assertions.assertEquals("Login", driver.getTitle());
     }
 
     @Test
-    public void createNote(){
+    public void addOrCreateNote() {
 
-        signUp("John", "Dell", "johndell", "delljohn");
-        login("johndell", "delljohn");
-        notePage = new NotePage(driver);
-        createNote("Note title test", "Note description test");
+        addOrCreateNote("Note title test", "Note description test", Option.NEW);
 
-        WebDriverWait wait = new WebDriverWait(driver, 2);
-        wait.until(ExpectedConditions.titleContains("Home"));
-
-        notePage.clickOnNotesTab();
-
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("userTable")));
-
+        notePage.clickOnNotesTab(driver);
 
         List<String> titles = notePage.getNotesTitles();
         Assertions.assertTrue(titles.contains("Note title test"));
 
         List<String> descriptions = notePage.getNotesDescriptions();
         Assertions.assertTrue(descriptions.contains("Note description test"));
+
+        notePage.clickDeleteNoteButton();
     }
 
     @Test
-    public void editNote(){
+    public void editNote() throws InterruptedException {
 
+        addOrCreateNote("Note title test", "Note description test", Option.NEW);
 
-        signUp("John", "Dell", "johndell", "delljohn");
-        login("johndell", "delljohn");
-        notePage = new NotePage(driver);
-        createNote("Note title test", "Note description test");
+        addOrCreateNote("Edited note title", "Edited description", Option.EDIT);
 
+        notePage.clickOnNotesTab(driver);
+
+        List<String> titles = notePage.getNotesTitles();
+        Assertions.assertTrue(titles.contains("Edited note title"));
+
+        List<String> descriptions = notePage.getNotesDescriptions();
+        Assertions.assertTrue(descriptions.contains("Edited description"));
+
+        notePage.clickDeleteNoteButton();
+    }
+
+    @Test
+    public void deleteNote() throws InterruptedException {
+
+        addOrCreateNote("Note title test", "Note description test", Option.NEW);
+
+        notePage.clickOnNotesTab(driver);
+
+        notePage.clickDeleteNoteButton();
+        List<String> titles = notePage.getNotesTitles();
+        Assertions.assertFalse(titles.contains("Edited note title"));
+
+        List<String> descriptions = notePage.getNotesDescriptions();
+        Assertions.assertFalse(descriptions.contains("Edited description"));
+    }
+
+    @Test
+    public void addCredentials() {
+        addOrEditCredentials("test.url", "testuser", "testpassword", "", Option.NEW);
+
+        credentialsPage.clickOnCredentialsTab(driver);
+
+        List<String> urls = credentialsPage.getCredentialsUrls();
+        Assertions.assertTrue(urls.contains("test.url"));
+
+        List<String> usernames = credentialsPage.getCredentialsUsernames();
+        Assertions.assertTrue(usernames.contains("testuser"));
+
+        List<String> passwords = credentialsPage.getCredentialsPasswords();
+        Assertions.assertFalse(passwords.contains("testpassword"));
+
+        credentialsPage.clickDeleteCredentialsButton();
+    }
+
+    @Test
+    public void editCredentialsAndCheckIfUnencryptedPasswordIsVisible() {
+        addOrEditCredentials("test.url", "testuser", "testpassword", "", Option.NEW);
+
+        addOrEditCredentials("editedtest.url", "newtestUser", "newtestpassword", "testpassword", Option.EDIT);
+
+        credentialsPage.clickOnCredentialsTab(driver);
+
+        List<String> urls = credentialsPage.getCredentialsUrls();
+        Assertions.assertTrue(urls.contains("editedtest.url"));
+
+        List<String> usernames = credentialsPage.getCredentialsUsernames();
+        Assertions.assertTrue(usernames.contains("newtestUser"));
+
+        List<String> passwords = credentialsPage.getCredentialsPasswords();
+        Assertions.assertFalse(passwords.contains("newtestpassword"));
+
+        credentialsPage.clickDeleteCredentialsButton();
+    }
+
+    @Test
+    public void deleteCredentials() {
+        addOrEditCredentials("test.url", "testuser", "testpassword", "", Option.NEW);
+
+        credentialsPage.clickOnCredentialsTab(driver);
+
+        credentialsPage.clickDeleteCredentialsButton();
+
+        List<String> urls = credentialsPage.getCredentialsUrls();
+        Assertions.assertFalse(urls.contains("editedtest.url"));
+
+        List<String> usernames = credentialsPage.getCredentialsUsernames();
+        Assertions.assertFalse(usernames.contains("newtestUser"));
+    }
+
+    private void addOrEditCredentials(String url, String username, String password, String oldPassword, Option option) {
         WebDriverWait wait = new WebDriverWait(driver, 2);
+        credentialsPage = new CredentialsPage(driver);
+
+        if (option == Option.NEW) {
+            signUp("John", "Dell", "johndell", "delljohn");
+            login("johndell", "delljohn");
+
+            wait.until(ExpectedConditions.titleContains("Home"));
+
+            credentialsPage.clickOnCredentialsTab(driver);
+            credentialsPage.clickNewCredentialsButton();
+        } else if (option == Option.EDIT) {
+            credentialsPage.clickOnCredentialsTab(driver);
+            credentialsPage.clickEditCredentialsButton();
+            //check if unencrypted password is visible
+            Assertions.assertEquals(oldPassword, credentialsPage.getPassword());
+        }
+        credentialsPage.enterUrl(url);
+        credentialsPage.enterUsername(username);
+        credentialsPage.enterPassword(password);
+        credentialsPage.clickSaveCredentialsButton();
+
         wait.until(ExpectedConditions.titleContains("Home"));
-
-        notePage.clickOnNotesTab();
-
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("userTable")));
-
-        notePage.clickEditNoteButton();
-
     }
 
-    private void createNote(String noteTitle, String noteDescription){
-        WebDriverWait wait = new WebDriverWait(driver, 2);
-        notePage.clickOnNotesTab();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("userTable")));
-        notePage.clickNewNoteButton();
-        notePage.enterNoteTitle(noteTitle);
-        notePage.enterNoteDescription(noteDescription);
-        notePage.clickSaveNoteButton();
+    private enum Option {
+        NEW,
+        EDIT;
     }
 
-    private void editNote(String noteTitle, String noteDescription){
-        WebDriverWait wait = new WebDriverWait(driver, 2);
-        notePage.clickOnNotesTab();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("userTable")));
-        notePage.clickEditNoteButton();
-        notePage.enterNoteTitle(noteTitle);
-        notePage.enterNoteDescription(noteDescription);
-        notePage.clickSaveNoteButton();
-    }
     @Test
     public void getLoginPage() {
         driver.get("http://localhost:" + this.port + "/login");
         Assertions.assertEquals("Login", driver.getTitle());
     }
-
 
     /**
      * PLEASE DO NOT DELETE THIS method.
@@ -267,7 +341,6 @@ class CloudStorageApplicationTests {
      * Read more about file size limits here:
      * https://spring.io/guides/gs/uploading-files/ under the "Tuning File Upload Limits" section.
      */
-    @Disabled
     @Test
     public void testLargeUpload() {
         // Create a test account
@@ -295,18 +368,21 @@ class CloudStorageApplicationTests {
 
     private void signUp(String firstName, String lastName, String username, String password) {
 
-        driver.get("http://localhost:" + port + "/signup");
-        SignupPage signupPage = new SignupPage(driver);
+        if (userService.getUser(username) == null) {
+            driver.get("http://localhost:" + port + "/signup");
+            SignupPage signupPage = new SignupPage(driver);
 
-        WebDriverWait wait = new WebDriverWait(driver, 2);
-        wait.until(ExpectedConditions.titleContains("Sign Up"));
+            WebDriverWait wait = new WebDriverWait(driver, 2);
+            wait.until(ExpectedConditions.titleContains("Sign Up"));
 
-        signupPage.enterFirstName(firstName);
-        signupPage.enterLastName(lastName);
-        signupPage.enterUsername(username);
-        signupPage.enterPassword(password);
-        signupPage.clickSignupButton();
-        Assertions.assertFalse(userService.isUsernameAvailable(username));
+            signupPage.enterFirstName(firstName);
+            signupPage.enterLastName(lastName);
+            signupPage.enterUsername(username);
+            signupPage.enterPassword(password);
+            signupPage.clickSignupButton();
+
+            Assertions.assertFalse(userService.isUsernameAvailable(username));
+        }
     }
 
     private void login(String username, String password) {
@@ -322,6 +398,39 @@ class CloudStorageApplicationTests {
         loginPage.clickLoginButton();
 
         Assertions.assertEquals("Home", driver.getTitle());
+    }
+
+    private void addOrCreateNote(String noteTitle, String noteDescription, Option option) {
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+
+        if (option == Option.NEW) {
+            signUp("John", "Dell", "johndell", "delljohn");
+            login("johndell", "delljohn");
+            notePage = new NotePage(driver);
+            notePage.clickOnNotesTab(driver);
+            notePage.clickNewNoteButton();
+        } else if (option == Option.EDIT) {
+            notePage.clickOnNotesTab(driver);
+            notePage.clickEditNoteButton();
+        }
+        notePage.enterNoteTitle(noteTitle);
+        notePage.enterNoteDescription(noteDescription);
+        notePage.clickSaveNoteButton();
+
+        wait.until(ExpectedConditions.titleContains("Home"));
+    }
+
+    private void editNote(String noteTitle, String noteDescription) {
+
+        signUp("John", "Dell", "johndell", "delljohn");
+        login("johndell", "delljohn");
+        notePage = new NotePage(driver);
+
+        notePage.clickOnNotesTab(driver);
+        notePage.clickEditNoteButton();
+        notePage.enterNoteTitle(noteTitle);
+        notePage.enterNoteDescription(noteDescription);
+        notePage.clickSaveNoteButton();
     }
 
 }
