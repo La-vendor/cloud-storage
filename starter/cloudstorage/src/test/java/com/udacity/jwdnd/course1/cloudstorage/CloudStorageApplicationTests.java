@@ -1,6 +1,5 @@
 package com.udacity.jwdnd.course1.cloudstorage;
 
-import com.udacity.jwdnd.course1.cloudstorage.mapper.NoteMapper;
 import com.udacity.jwdnd.course1.cloudstorage.services.UserService;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.*;
@@ -29,9 +28,6 @@ class CloudStorageApplicationTests {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private NoteMapper noteMapper;
 
     @BeforeAll
     static void beforeAll() {
@@ -91,7 +87,7 @@ class CloudStorageApplicationTests {
     }
 
     @Test
-    public void editNote() throws InterruptedException {
+    public void editNote()  {
 
         addOrCreateNote("Note title test", "Note description test", Option.NEW);
 
@@ -109,7 +105,7 @@ class CloudStorageApplicationTests {
     }
 
     @Test
-    public void deleteNote() throws InterruptedException {
+    public void deleteNote(){
 
         addOrCreateNote("Note title test", "Note description test", Option.NEW);
 
@@ -176,36 +172,7 @@ class CloudStorageApplicationTests {
         Assertions.assertFalse(usernames.contains("newtestUser"));
     }
 
-    private void addOrEditCredentials(String url, String username, String password, String oldPassword, Option option) {
-        WebDriverWait wait = new WebDriverWait(driver, 2);
-        credentialsPage = new CredentialsPage(driver);
 
-        if (option == Option.NEW) {
-            signUp("John", "Dell", "johndell", "delljohn");
-            login("johndell", "delljohn");
-
-            wait.until(ExpectedConditions.titleContains("Home"));
-
-            credentialsPage.clickOnCredentialsTab(driver);
-            credentialsPage.clickNewCredentialsButton();
-        } else if (option == Option.EDIT) {
-            credentialsPage.clickOnCredentialsTab(driver);
-            credentialsPage.clickEditCredentialsButton();
-            //check if unencrypted password is visible
-            Assertions.assertEquals(oldPassword, credentialsPage.getPassword());
-        }
-        credentialsPage.enterUrl(url);
-        credentialsPage.enterUsername(username);
-        credentialsPage.enterPassword(password);
-        credentialsPage.clickSaveCredentialsButton();
-
-        wait.until(ExpectedConditions.titleContains("Home"));
-    }
-
-    private enum Option {
-        NEW,
-        EDIT;
-    }
 
     @Test
     public void getLoginPage() {
@@ -420,17 +387,34 @@ class CloudStorageApplicationTests {
         wait.until(ExpectedConditions.titleContains("Home"));
     }
 
-    private void editNote(String noteTitle, String noteDescription) {
+    private void addOrEditCredentials(String url, String username, String password, String oldPassword, Option option) {
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+        credentialsPage = new CredentialsPage(driver);
 
-        signUp("John", "Dell", "johndell", "delljohn");
-        login("johndell", "delljohn");
-        notePage = new NotePage(driver);
+        if (option == Option.NEW) {
+            signUp("John", "Dell", "johndell", "delljohn");
+            login("johndell", "delljohn");
 
-        notePage.clickOnNotesTab(driver);
-        notePage.clickEditNoteButton();
-        notePage.enterNoteTitle(noteTitle);
-        notePage.enterNoteDescription(noteDescription);
-        notePage.clickSaveNoteButton();
+            wait.until(ExpectedConditions.titleContains("Home"));
+
+            credentialsPage.clickOnCredentialsTab(driver);
+            credentialsPage.clickNewCredentialsButton();
+        } else if (option == Option.EDIT) {
+            credentialsPage.clickOnCredentialsTab(driver);
+            credentialsPage.clickEditCredentialsButton();
+            //check if unencrypted password is visible
+            Assertions.assertEquals(oldPassword, credentialsPage.getPassword());
+        }
+        credentialsPage.enterUrl(url);
+        credentialsPage.enterUsername(username);
+        credentialsPage.enterPassword(password);
+        credentialsPage.clickSaveCredentialsButton();
+
+        wait.until(ExpectedConditions.titleContains("Home"));
     }
 
+    private enum Option {
+        NEW,
+        EDIT
+    }
 }
