@@ -37,6 +37,9 @@ public class NotePage {
     @FindBy(id = "note-delete-button")
     private WebElement deleteNoteButton;
 
+    @FindBy(id ="note-titles")
+    private WebElement noteTitles;
+
 
 
     public NotePage(WebDriver webDriver) {
@@ -45,6 +48,7 @@ public class NotePage {
 
     public void clickOnNotesTab(WebDriver driver) {
         WebDriverWait wait = new WebDriverWait(driver, 2);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nav-notes-tab")));
         notesTab.click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("notesTable")));
     }
@@ -75,7 +79,9 @@ public class NotePage {
         deleteNoteButton.click();
     }
 
-    public List<String> getNotesTitles() {
+    public List<String> getNotesTitles(WebDriver driver) {
+        WebDriverWait wait = new WebDriverWait(driver, 3);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("notesTable")));
         List<WebElement> notes = notesTable.findElements(By.id("note-titles"));
         List<String> titles = new ArrayList<>();
         for (WebElement note : notes) {
@@ -84,7 +90,9 @@ public class NotePage {
         return titles;
     }
 
-    public List<String> getNotesDescriptions() {
+    public List<String> getNotesDescriptions(WebDriver driver) {
+        WebDriverWait wait = new WebDriverWait(driver, 3);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("notesTable")));
         List<WebElement> notes = notesTable.findElements(By.id("note-descriptions"));
         List<String> descriptions = new ArrayList<>();
         for (WebElement note : notes) {

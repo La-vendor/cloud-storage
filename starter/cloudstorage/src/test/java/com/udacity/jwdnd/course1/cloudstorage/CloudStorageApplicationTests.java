@@ -1,5 +1,6 @@
 package com.udacity.jwdnd.course1.cloudstorage;
 
+import com.udacity.jwdnd.course1.cloudstorage.services.NoteService;
 import com.udacity.jwdnd.course1.cloudstorage.services.UserService;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.*;
@@ -28,6 +29,9 @@ class CloudStorageApplicationTests {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private NoteService noteService;
 
     @BeforeAll
     static void beforeAll() {
@@ -76,46 +80,51 @@ class CloudStorageApplicationTests {
         addOrCreateNote("Note title test", "Note description test", Option.NEW);
 
         notePage.clickOnNotesTab(driver);
-
-        List<String> titles = notePage.getNotesTitles();
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+        List<String> titles = notePage.getNotesTitles(driver);
         Assertions.assertTrue(titles.contains("Note title test"));
 
-        List<String> descriptions = notePage.getNotesDescriptions();
+        List<String> descriptions = notePage.getNotesDescriptions(driver);
         Assertions.assertTrue(descriptions.contains("Note description test"));
 
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("note-delete-button")));
         notePage.clickDeleteNoteButton();
     }
 
     @Test
-    public void editNote()  {
+    public void editNote() {
 
         addOrCreateNote("Note title test", "Note description test", Option.NEW);
 
         addOrCreateNote("Edited note title", "Edited description", Option.EDIT);
-
+        WebDriverWait wait = new WebDriverWait(driver, 2);
         notePage.clickOnNotesTab(driver);
 
-        List<String> titles = notePage.getNotesTitles();
+        List<String> titles = notePage.getNotesTitles(driver);
         Assertions.assertTrue(titles.contains("Edited note title"));
 
-        List<String> descriptions = notePage.getNotesDescriptions();
+        List<String> descriptions = notePage.getNotesDescriptions(driver);
         Assertions.assertTrue(descriptions.contains("Edited description"));
 
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("note-delete-button")));
         notePage.clickDeleteNoteButton();
     }
 
     @Test
-    public void deleteNote(){
+    public void deleteNote() {
 
         addOrCreateNote("Note title test", "Note description test", Option.NEW);
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+        notePage.clickOnNotesTab(driver);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("note-delete-button")));
+        notePage.clickDeleteNoteButton();
 
         notePage.clickOnNotesTab(driver);
 
-        notePage.clickDeleteNoteButton();
-        List<String> titles = notePage.getNotesTitles();
+        List<String> titles = notePage.getNotesTitles(driver);
         Assertions.assertFalse(titles.contains("Edited note title"));
 
-        List<String> descriptions = notePage.getNotesDescriptions();
+        List<String> descriptions = notePage.getNotesDescriptions(driver);
         Assertions.assertFalse(descriptions.contains("Edited description"));
     }
 
@@ -123,17 +132,19 @@ class CloudStorageApplicationTests {
     public void addCredentials() {
         addOrEditCredentials("test.url", "testuser", "testpassword", "", Option.NEW);
 
+        WebDriverWait wait = new WebDriverWait(driver, 2);
         credentialsPage.clickOnCredentialsTab(driver);
 
-        List<String> urls = credentialsPage.getCredentialsUrls();
+        List<String> urls = credentialsPage.getCredentialsUrls(driver);
         Assertions.assertTrue(urls.contains("test.url"));
 
-        List<String> usernames = credentialsPage.getCredentialsUsernames();
+        List<String> usernames = credentialsPage.getCredentialsUsernames(driver);
         Assertions.assertTrue(usernames.contains("testuser"));
 
-        List<String> passwords = credentialsPage.getCredentialsPasswords();
+        List<String> passwords = credentialsPage.getCredentialsPasswords(driver);
         Assertions.assertFalse(passwords.contains("testpassword"));
 
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentials-delete-button")));
         credentialsPage.clickDeleteCredentialsButton();
     }
 
@@ -143,17 +154,19 @@ class CloudStorageApplicationTests {
 
         addOrEditCredentials("editedtest.url", "newtestUser", "newtestpassword", "testpassword", Option.EDIT);
 
+        WebDriverWait wait = new WebDriverWait(driver, 2);
         credentialsPage.clickOnCredentialsTab(driver);
 
-        List<String> urls = credentialsPage.getCredentialsUrls();
+        List<String> urls = credentialsPage.getCredentialsUrls(driver);
         Assertions.assertTrue(urls.contains("editedtest.url"));
 
-        List<String> usernames = credentialsPage.getCredentialsUsernames();
+        List<String> usernames = credentialsPage.getCredentialsUsernames(driver);
         Assertions.assertTrue(usernames.contains("newtestUser"));
 
-        List<String> passwords = credentialsPage.getCredentialsPasswords();
+        List<String> passwords = credentialsPage.getCredentialsPasswords(driver);
         Assertions.assertFalse(passwords.contains("newtestpassword"));
 
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentials-delete-button")));
         credentialsPage.clickDeleteCredentialsButton();
     }
 
@@ -162,16 +175,19 @@ class CloudStorageApplicationTests {
         addOrEditCredentials("test.url", "testuser", "testpassword", "", Option.NEW);
 
         credentialsPage.clickOnCredentialsTab(driver);
+        WebDriverWait wait = new WebDriverWait(driver, 2);
 
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentials-delete-button")));
         credentialsPage.clickDeleteCredentialsButton();
 
-        List<String> urls = credentialsPage.getCredentialsUrls();
+        credentialsPage.clickOnCredentialsTab(driver);
+
+        List<String> urls = credentialsPage.getCredentialsUrls(driver);
         Assertions.assertFalse(urls.contains("editedtest.url"));
 
-        List<String> usernames = credentialsPage.getCredentialsUsernames();
+        List<String> usernames = credentialsPage.getCredentialsUsernames(driver);
         Assertions.assertFalse(usernames.contains("newtestUser"));
     }
-
 
 
     @Test
@@ -340,12 +356,16 @@ class CloudStorageApplicationTests {
             SignupPage signupPage = new SignupPage(driver);
 
             WebDriverWait wait = new WebDriverWait(driver, 2);
-            wait.until(ExpectedConditions.titleContains("Sign Up"));
 
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inputFirstName")));
             signupPage.enterFirstName(firstName);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inputLastName")));
             signupPage.enterLastName(lastName);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inputUsername")));
             signupPage.enterUsername(username);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inputPassword")));
             signupPage.enterPassword(password);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("buttonSignUp")));
             signupPage.clickSignupButton();
 
             Assertions.assertFalse(userService.isUsernameAvailable(username));
@@ -358,10 +378,12 @@ class CloudStorageApplicationTests {
         LoginPage loginPage = new LoginPage(driver);
 
         WebDriverWait wait = new WebDriverWait(driver, 2);
-        wait.until(ExpectedConditions.titleContains("Login"));
 
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inputUsername")));
         loginPage.enterUsername(username);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inputPassword")));
         loginPage.enterPassword(password);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("login-button")));
         loginPage.clickLoginButton();
 
         Assertions.assertEquals("Home", driver.getTitle());
@@ -374,14 +396,21 @@ class CloudStorageApplicationTests {
             signUp("John", "Dell", "johndell", "delljohn");
             login("johndell", "delljohn");
             notePage = new NotePage(driver);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nav-notes-tab")));
             notePage.clickOnNotesTab(driver);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("add-note-button")));
             notePage.clickNewNoteButton();
         } else if (option == Option.EDIT) {
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nav-notes-tab")));
             notePage.clickOnNotesTab(driver);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("note-edit-button")));
             notePage.clickEditNoteButton();
         }
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("note-title")));
         notePage.enterNoteTitle(noteTitle);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("note-description")));
         notePage.enterNoteDescription(noteDescription);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("save-note-button")));
         notePage.clickSaveNoteButton();
 
         wait.until(ExpectedConditions.titleContains("Home"));
@@ -395,19 +424,25 @@ class CloudStorageApplicationTests {
             signUp("John", "Dell", "johndell", "delljohn");
             login("johndell", "delljohn");
 
-            wait.until(ExpectedConditions.titleContains("Home"));
-
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nav-credentials-tab")));
             credentialsPage.clickOnCredentialsTab(driver);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("new-credentials-button")));
             credentialsPage.clickNewCredentialsButton();
         } else if (option == Option.EDIT) {
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nav-credentials-tab")));
             credentialsPage.clickOnCredentialsTab(driver);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentials-edit-button")));
             credentialsPage.clickEditCredentialsButton();
             //check if unencrypted password is visible
             Assertions.assertEquals(oldPassword, credentialsPage.getPassword());
         }
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credential-url")));
         credentialsPage.enterUrl(url);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credential-username")));
         credentialsPage.enterUsername(username);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credential-password")));
         credentialsPage.enterPassword(password);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("save-credentials-button")));
         credentialsPage.clickSaveCredentialsButton();
 
         wait.until(ExpectedConditions.titleContains("Home"));

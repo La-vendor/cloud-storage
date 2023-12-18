@@ -45,8 +45,9 @@ public class CredentialsPage {
     }
 
     public void clickOnCredentialsTab(WebDriver driver){
-        credentialsTab.click();
         WebDriverWait wait = new WebDriverWait(driver, 2);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nav-credentials-tab")));
+        credentialsTab.click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentialTable")));
     }
 
@@ -85,7 +86,9 @@ public class CredentialsPage {
         return credentialsPasswordTextField.getAttribute("value");
     }
 
-    public List<String> getCredentialsUrls(){
+    public List<String> getCredentialsUrls(WebDriver driver){
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentialTable")));
         List<WebElement> credentials = credentialTable.findElements(By.id("credentials-url"));
         List<String> extractedStrings = new ArrayList<>();
         for(WebElement credential : credentials){
@@ -94,7 +97,9 @@ public class CredentialsPage {
         return extractedStrings;
     }
 
-    public List<String> getCredentialsUsernames(){
+    public List<String> getCredentialsUsernames(WebDriver driver){
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentialTable")));
         List<WebElement> credentials = credentialTable.findElements(By.id("credentials-username"));
         List<String> extractedStrings = new ArrayList<>();
         for(WebElement credential : credentials){
@@ -103,7 +108,9 @@ public class CredentialsPage {
         return extractedStrings;
     }
 
-    public List<String> getCredentialsPasswords(){
+    public List<String> getCredentialsPasswords(WebDriver driver){
+        WebDriverWait wait = new WebDriverWait(driver, 2);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("credentialTable")));
         List<WebElement> credentials = credentialTable.findElements(By.id("credentials-password"));
         List<String> extractedStrings = new ArrayList<>();
         for(WebElement credential : credentials){
